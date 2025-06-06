@@ -28,6 +28,7 @@ st.title("FFT and Spectrogram")
 center_freq_mhz = st.slider("Center Frequency (MHz)", min_value=88.0, max_value=108.0, step=0.1, value=91.9)
 # center_freq_mhz = st.slider("Center Frequency (MHz)", min_value=900.0, max_value=1800.0, step=10.0, value=1500.0)
 center_freq = center_freq_mhz * 1e6
+# plot = st.empty()
 plot = st.empty()
 plot2 = st.empty()
 plot3 = st.empty()
@@ -47,7 +48,16 @@ if input_source == "UDP Socket":
     recv_sock.bind(("127.0.0.1", UDP_PORT))
     recv_sock.setblocking(False)
 
-st.sidebar.markdown("Developed by SRIKANTH, CHANDANA, SHISHIR, MEENAKSHI ")
+st.sidebar.markdown("" \
+"" \
+"" \
+"" \
+"" \
+"" \
+"" \
+"" \
+"Developed by SRIKANTH, CHANDANA, SHISHIR, MEENAKSHI ")
+# spec_plot = st.empty()
 if input_source == "SDR":
     if "sdr" not in st.session_state:
         sdr = RtlSdr()
@@ -63,9 +73,9 @@ while True:
     sample_list = []
     if input_source == "SDR":
         samples = sdr.read_samples(FFT_SIZE)
-    else:  
+    else:  # Receiving from UDP
         try:
-            data, _ = recv_sock.recvfrom(FFT_SIZE * 8 * 2)  
+            data, _ = recv_sock.recvfrom(FFT_SIZE * 8 * 2)  # complex64 = 8 bytes (2x float32)
             samples = np.frombuffer(data, dtype=np.complex64)
         except BlockingIOError:
             continue
@@ -100,8 +110,14 @@ while True:
     ax_pow.grid(True)
     ax_pow.set_xlabel("Time")
     ax_pow.set_ylabel("Total Power (dB)")
+    # ax_fft.xlabel("Frequency (MHz)")
     ax_fft.set_xlim(freqs[0]/1e6, freqs[-1]/1e6)
+    # tick_freqs = np.linspace(freqs[0], freqs[-1], num=10)
+    # ax_fft.set_xticks(tick_freqs / 1e6) 
+    # ax_fft.set_xlabel("Frequency (MHz)", color='white')
     ax_fft.set_ylim(-60, 100)
+    # fft_plot.pyplot(fig_fft)
+    # plt.close(fig_fft)
 
     img = ax_spec.imshow(np.array(spectrogram_buffer), origin='upper', aspect='auto', extent=[freqs[0]/1e6, freqs[-1]/1e6, 0, 60], cmap='jet', vmin=-40, vmax=5)
     ax_spec.set_yticks([])
@@ -131,7 +147,8 @@ while True:
         avg_power_density = np.mean(spec_array, axis=0)
         freqs_mhz = freqs / 1e6
         avg_power_density -= np.min(avg_power_density)
-        probability = avg_power_density / np.sum(avg_power_density)
+        probability = avg_power_density / np.sum(avg_power_density)\
+        # num_bins = 100
         num_bins = 50
         bin_edges = np.linspace(freqs_mhz[0], freqs_mhz[-1], num_bins + 1)
         bin_indices = np.digitize(freqs_mhz, bin_edges) - 1
@@ -157,6 +174,7 @@ while True:
 
         plot3.pyplot(fig_hist)
         plt.close(fig_hist)
+    # fig_fft.colorbar(img, ax=ax_spec, label="Power (dB)")
 
     df = pd.DataFrame(samples, columns=['samples'])
     if csv_button:
@@ -169,3 +187,4 @@ while True:
     plt.close(fig_spec)
 
     time.sleep(0.01)
+# sdr.close()
